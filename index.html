@@ -1229,11 +1229,13 @@
       alert.style.transform = 'translateX(-50%)';
       alert.style.zIndex = '10000';
       alert.style.maxWidth = '90%';
+      alert.style.fontSize = '1.1rem';  // ← AJOUTE cette ligne pour texte plus gros
+      alert.style.fontWeight = '600';
       document.body.appendChild(alert);
       
       setTimeout(() => {
         alert.remove();
-      }, 3000);
+      }, 5000);
     }
 
     // ========== GESTION RGPD ==========
@@ -1942,7 +1944,7 @@
       });
       
       updateProgress();
-      showSuccess(`✅ ${data.emoji} ajouté ! Distance: ${distance.toFixed(1)} km`);
+      showSuccess(`✅ Scan ${participants.length}/${MIN_PARTICIPANTS_REQUIRED} ・ Distance: ${distance.toFixed(1)} km`);
       
       // CHALLENGE SI MOINS DE 5KM
       if (distance < 5) {
