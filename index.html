@@ -1239,7 +1239,12 @@ function resetSessionData() {
       mode1Days = parseInt(localStorage.getItem('mode1Days') || '0');
       mode2Days = parseInt(localStorage.getItem('mode2Days') || '0');
       myDepartureTime = localStorage.getItem('departureTime') || '07:30';
-      googleScriptUrl = localStorage.getItem('googleScriptUrl') || '';
+      // Récupérer depuis localStorage OU garder l'URL en dur
+const savedUrl = localStorage.getItem('googleScriptUrl');
+if (savedUrl) {
+  googleScriptUrl = savedUrl;
+}
+// Sinon, googleScriptUrl garde sa valeur en dur
 
       scanCount = parseInt(localStorage.getItem('scanCount') || '0');
     }
@@ -1395,9 +1400,7 @@ function resetSessionData() {
   } catch (error) {
     console.error('❌ Erreur envoi Google Sheets:', error);
     // Afficher une alerte pour debug mobile
-    if (typeof alert !== 'undefined') {
-      alert('Erreur envoi: ' + error.message);
-    }
+    showError('Erreur envoi: ' + error.message);
     return false;
   }
 }
@@ -2563,8 +2566,7 @@ myCoords = { lat: res.lat, lon: res.lon };
             localStorage.setItem('departureTime', departure);
             localStorage.setItem('fullAddress', myFullAddress);
             
-           // ENVOI GOOGLE SHEETS
-// ENVOI GOOGLE SHEETS
+
 sendToGoogleSheets({
   type: 'participant',
   id: myUniqueId,
