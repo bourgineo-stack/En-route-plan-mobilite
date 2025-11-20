@@ -2195,6 +2195,7 @@
         }
 
           // Construire leaderboard local
+        
         const localScans = {};
           localScans[myEmoji] = scanCount;
           participants.forEach(p => {
@@ -2202,6 +2203,10 @@
               localScans[p.emoji] = 0;
             }
         });
+        
+        leaderboard = Object.entries(localScans)
+          .map(([emoji, count]) => ({ emoji, count }))
+          .sort((a, b) => b.count - a.count);
         
         const transportCounts = {};
         participants.forEach(p => {
@@ -2217,6 +2222,9 @@
         
         $('adminStats').innerHTML = statsHTML;
       }
+      
+      // Afficher le classement
+      displayLeaderboard(leaderboard);
     }
 
     function displayLeaderboard(leaderboard) {
@@ -2385,9 +2393,8 @@
         }));
 
       
-leaderboard = Object.entries(localScans)
-  .map(([emoji, count]) => ({ emoji, count }))
-  .sort((a, b) => b.count - a.count);
+
+        
         scansData = [{
           Emoji: myEmoji,
           ID: myUniqueId.substring(0, 8),
@@ -2413,8 +2420,7 @@ leaderboard = Object.entries(localScans)
       
       XLSX.writeFile(wb, `atelier-mobilite-${Date.now()}.xlsx`);
       showSuccess('📊 Excel exporté !');
-      // Afficher le classement
-      displayLeaderboard(leaderboard);
+      
     }
     
     // ========== INITIALISATION ==========
