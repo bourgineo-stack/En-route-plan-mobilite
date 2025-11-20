@@ -1127,6 +1127,23 @@
       'walk': 0,
       'remote': 0
     };
+
+    // ========== TRADUCTION MODES DE TRANSPORT ==========
+const TRANSPORT_LABELS = {
+  'car-thermal': 'Voiture thermique',
+  'car-electric': 'Voiture électrique',
+  'carpool': 'Covoiturage',
+  'train': 'Train/RER',
+  'bus': 'Bus/Tram',
+  'bike': 'Vélo',
+  'ebike': 'Vélo électrique',
+  'walk': 'Marche',
+  'remote': 'Télétravail'
+};
+
+function translateTransport(mode) {
+  return TRANSPORT_LABELS[mode] || mode;
+}
     
     // ========== VARIABLES GLOBALES ==========
     let myCoords = null;
@@ -1175,7 +1192,29 @@ let googleScriptUrl = 'https://script.google.com/macros/s/AKfycbzFwJ2Eyt05aq9OnW
         pseudo += EMOJI_SET[Math.floor(Math.random() * EMOJI_SET.length)];
       }
       return pseudo;
-    }    
+    }
+
+    // ========== RÉINITIALISATION SESSION ==========
+function resetSessionData() {
+  const preservedKeys = ['myUniqueId', 'myEmoji', 'rgpdAccepted', 'googleScriptUrl'];
+  
+  // Sauvegarder temporairement
+  const preserved = {};
+  preservedKeys.forEach(key => {
+    const value = localStorage.getItem(key);
+    if (value) preserved[key] = value;
+  });
+  
+  // Tout effacer
+  localStorage.clear();
+  
+  // Restaurer les éléments préservés
+  Object.entries(preserved).forEach(([key, value]) => {
+    localStorage.setItem(key, value);
+  });
+  
+  console.log('🔄 Données de session réinitialisées');
+}
     
     function restoreUserData() {
       myUniqueId = localStorage.getItem('myUniqueId');
@@ -1331,28 +1370,37 @@ let googleScriptUrl = 'https://script.google.com/macros/s/AKfycbzFwJ2Eyt05aq9OnW
     
     // ========== GOOGLE SHEETS SYNC ==========
     async function sendToGoogleSheets(data) {
-      if (!googleScriptUrl) {
-        console.warn('Google Script URL non configurée, sauvegarde locale uniquement');
-        return false;
-      }
-      
-      try {
-        const response = await fetch(googleScriptUrl, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(data)
-        });
-        
-        console.log('✅ Données envoyées à Google Sheets');
-        return true;
-      } catch (error) {
-        console.error('❌ Erreur envoi Google Sheets:', error);
-        return false;
-      }
+  if (!googleScriptUrl) {
+    console.warn('⚠️ Google Script URL non configurée, sauvegarde locale uniquement');
+    return false;
+  }
+  
+  console.log('📤 Envoi vers Google Sheets:', data);
+  
+  try {
+    const response = await fetch(googleScriptUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+      redirect: 'follow'
+    });
+    
+    console.log('✅ Réponse reçue, statut:', response.status);
+    
+    // Même avec no-cors on ne peut pas lire la réponse, 
+    // mais on considère que c'est OK si pas d'erreur
+    return true;
+  } catch (error) {
+    console.error('❌ Erreur envoi Google Sheets:', error);
+    // Afficher une alerte pour debug mobile
+    if (typeof alert !== 'undefined') {
+      alert('Erreur envoi: ' + error.message);
     }
+    return false;
+  }
+}
     
     async function getFromGoogleSheets() {
       if (!googleScriptUrl) {
@@ -1861,19 +1909,30 @@ let googleScriptUrl = 'https://script.google.com/macros/s/AKfycbzFwJ2Eyt05aq9OnW
     
     // ========== GESTION SCAN ENTREPRISE ==========
     function handleCompanyScan(data) {
-      if (data.type === 'company' && data.lat && data.lon) {
-        companyCoords = { lat: data.lat, lon: data.lon };
-        companyAddress = 'Entreprise';
-        
-        localStorage.setItem('companyCoords', JSON.stringify(companyCoords));
-        localStorage.setItem('companyAddress', companyAddress);
-        
-        stopAllCameras();
-        showSuccess('✅ Entreprise scannée !');
-        
-        calculateAndShowReport();
-      }
+  if (data.type === 'company' && data.lat && data.lon) {
+    companyCoords = { lat: data.lat, lon: data.lon };
+    companyAddress = 'Entreprise';
+    
+    localStorage.setItem('companyCoords', JSON.stringify(companyCoords));
+    localStorage.setItem('companyAddress', companyAddress);
+    
+    stopAllCameras();
+    showSuccess('✅ Entreprise scannée !');
+    
+    // Calculer et envoyer la distance entreprise
+    if (myCoords) {
+      const distanceToCompany = haversineKm(myCoords.lat, myCoords.lon, companyCoords.lat, companyCoords.lon);
+      sendToGoogleSheets({
+        type: 'company_distance',
+        participantId: myUniqueId,
+        emoji: myEmoji,
+        distance: distanceToCompany
+      });
     }
+    
+    calculateAndShowReport();
+  }
+}
 
     // ========== GESTION SCAN POSITIONNEMENT ==========
    function handlePositioningScan(data) {
@@ -2336,9 +2395,9 @@ let googleScriptUrl = 'https://script.google.com/macros/s/AKfycbzFwJ2Eyt05aq9OnW
     <p class="emoji">${myEmoji}</p>
     <p><strong>Nombre de participants scannés :</strong> ${scanCount}</p>
     <p><strong>Adresse :</strong> ${myFullAddress}</p>
-    <p><strong>Mode principal :</strong> ${myTransportMode}</p>
-    ${myTransportMode2 ? `<p><strong>Mode secondaire :</strong> ${myTransportMode2} (${mode2Days}j/semaine)</p>` : ''}
-    <p><strong>Heure de départ :</strong> ${myDepartureTime}</p>
+<p><strong>Mode principal :</strong> ${translateTransport(myTransportMode)}</p>
+${myTransportMode2 ? `<p><strong>Mode secondaire :</strong> ${translateTransport(myTransportMode2)} (${mode2Days}j/semaine)</p>` : ''}
+<p><strong>Heure de départ :</strong> ${myDepartureTime}</p>
   </div>
   
   <div class="section">
@@ -2439,7 +2498,13 @@ let googleScriptUrl = 'https://script.google.com/macros/s/AKfycbzFwJ2Eyt05aq9OnW
     }
     
     // ========== INITIALISATION ==========
-    document.addEventListener('DOMContentLoaded', function() {
+   document.addEventListener('DOMContentLoaded', function() {
+  // Réinitialiser les données de session au rechargement (mais garder l'identité)
+  if (!sessionStorage.getItem('sessionActive')) {
+    resetSessionData();
+    sessionStorage.setItem('sessionActive', 'true');
+  }
+  
   checkRGPDStatus();
   restoreUserData();
   
@@ -2499,6 +2564,7 @@ myCoords = { lat: res.lat, lon: res.lon };
             localStorage.setItem('fullAddress', myFullAddress);
             
            // ENVOI GOOGLE SHEETS
+// ENVOI GOOGLE SHEETS
 sendToGoogleSheets({
   type: 'participant',
   id: myUniqueId,
@@ -2507,6 +2573,9 @@ sendToGoogleSheets({
   lon: myCoords.lon,
   address: myFullAddress,
   transport: myTransportMode,
+  transportMode2: myTransportMode2,
+  mode1Days: mode1Days,
+  mode2Days: mode2Days,
   departureTime: myDepartureTime
 });
             
