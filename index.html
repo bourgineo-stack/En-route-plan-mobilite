@@ -901,7 +901,7 @@
         <div class="export-section">
           <h3>📄 Téléchargez votre rapport</h3>
           <p style="margin: 15px 0;">Votre rapport complet contient votre profil, vos voisins proches, vos propositions et vos gains estimés.</p>
-          <button class="btn-primary" onclick="generatePDF()">📥 Télécharger mon rapport PDF</button>
+          <button class="btn-primary" onclick="generatePDF()">📥 Télécharger mon rapport</button>
         </div>
         
         <div class="navigation-buttons">
@@ -946,12 +946,14 @@
             <button class="btn-primary" onclick="generateCompanyQR()">Générer QR entreprise</button>
             
             <div id="companyQRSection" style="display: none;">
-              <div class="qrcode-container">
-                <div id="companyQrcode"></div>
-              </div>
-              <p style="text-align: center; font-size: 0.9rem; color: #6B7280;">Affichez ce QR code aux participants</p>
-            </div>
-         </div>
+  <div class="qrcode-container">
+    <p style="font-weight: bold; margin-bottom: 15px;">📱 QR Code à afficher aux participants</p>
+    <div id="companyQrcode" style="display: flex; justify-content: center; align-items: center;"></div>
+    <p style="text-align: center; font-size: 0.9rem; color: #6B7280; margin-top: 15px;">
+      Affichez ce QR code en grand écran pour que les participants le scannent
+    </p>
+  </div>
+</div>
     
     <h3 style="margin-top: 30px;">🏆 Classement des participants</h3>
     <div class="leaderboard" id="leaderboard"></div>
@@ -1876,8 +1878,15 @@
    function handlePositioningScan(data) {
   if (data.id && data.lat && data.lon) {
     const distance = haversineKm(myCoords.lat, myCoords.lon, data.lat, data.lon);
-    showSuccess(`📍 Distance: ${distance.toFixed(1)} km • Scannez d'autres participants !`);
-    // NE PAS ARRÊTER LA CAMÉRA pour permettre plusieurs scans
+    showSuccess(`📍 Distance: ${distance.toFixed(1)} km • Vous pouvez scanner d'autres participants`);
+    
+    // Arrêter la caméra et réafficher le bouton scan
+    stopAllCameras();
+    const scanBtn = $('positioningScanBtn');
+    if (scanBtn) {
+      scanBtn.style.display = 'block';
+    }
+    
     return true;
   }
   return false;
