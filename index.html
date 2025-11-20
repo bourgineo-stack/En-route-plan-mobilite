@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
@@ -525,6 +525,57 @@
       color: #FF9800;
       font-weight: bold;
     }
+    
+    .emoji-display {
+      font-size: 2rem;
+      text-align: center;
+      margin: 15px 0;
+      padding: 15px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 12px;
+      color: white;
+    }
+    
+    .leaderboard {
+      margin: 20px 0;
+    }
+    
+    .leaderboard-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 15px;
+      margin: 10px 0;
+      background: #F8F9FA;
+      border-radius: 12px;
+      border-left: 4px solid #06D6A0;
+    }
+    
+    .leaderboard-item.first {
+      background: linear-gradient(135deg, #FFD700, #FFA500);
+      border-left: 4px solid #FF8C00;
+    }
+    
+    .leaderboard-item.second {
+      background: linear-gradient(135deg, #C0C0C0, #A9A9A9);
+      border-left: 4px solid #808080;
+    }
+    
+    .leaderboard-item.third {
+      background: linear-gradient(135deg, #CD7F32, #B8860B);
+      border-left: 4px solid #8B4513;
+    }
+    
+    .leaderboard-emoji {
+      font-size: 2rem;
+      margin-right: 15px;
+    }
+    
+    .leaderboard-score {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1E3A5F;
+    }
   </style>
 </head>
 <body>
@@ -597,10 +648,17 @@
         </div>
 
         <div id="afterLocationSection" style="display: none;">
-          <div class="alert alert-success show">
-            ✅ Localisation enregistrée avec succès !
-          </div>
-          <div id="addressPreview" style="background: #F8F9FA; padding: 15px; border-radius: 10px; margin: 15px 0;">
+  <div class="alert alert-success show">
+    ✅ Localisation enregistrée avec succès !
+  </div>
+  
+  <div class="emoji-display">
+    <p>Votre pseudo de l'atelier :</p>
+    <div id="myEmojiDisplay" style="font-size: 3rem; margin: 10px 0;"></div>
+    <p style="font-size: 0.9rem; opacity: 0.9;">Pour vous identifier lors des classements et demandes RGPD</p>
+  </div>
+  
+  <div id="addressPreview" style="background: #F8F9FA; padding: 15px; border-radius: 10px; margin: 15px 0;">
             <strong>📍 Votre adresse :</strong> <span id="detectedAddress"></span>
           </div>
 
@@ -612,11 +670,16 @@
 
     <!-- Étape 2 : Rencontres -->
     <div id="step2" class="step">
-      <div class="card">
-        <h2>🤝 Faisons connaissance !</h2>
-        <p style="text-align: center; margin-bottom: 20px;">Scannez un maximum de participants pour découvrir vos voisins.</p>
-        
-        <div class="qrcode-container">
+  <div class="card">
+    <h2>🤝 Faisons connaissance !</h2>
+    <p style="text-align: center; margin-bottom: 20px;">Scannez un maximum de participants pour découvrir vos voisins.</p>
+    
+    <div class="emoji-display">
+      <p>Votre pseudo :</p>
+      <div id="step2EmojiDisplay" style="font-size: 2rem;"></div>
+    </div>
+    
+    <div class="qrcode-container">
           <p><strong>Votre QR code personnel</strong></p>
           <div id="qrcode"></div>
         </div>
@@ -703,11 +766,19 @@
         </div>
         
         <div class="qrcode-container">
-          <p><strong>Votre QR code</strong></p>
-          <div id="qrcodeStep4"></div>
-        </div>
-        
-        <div class="navigation-buttons">
+      <p><strong>Votre QR code</strong></p>
+      <div id="qrcodeStep4"></div>
+    </div>
+    
+    <div class="camera-view" id="positioningCameraView">
+      <video id="positioningVideo" autoplay playsinline muted></video>
+      <button class="btn-outline" style="margin-top: 15px;" onclick="stopAllCameras()">🛑 Arrêter</button>
+    </div>
+    
+    <button class="btn-secondary" id="positioningScanBtn" onclick="startScanLoop('positioning')">📱 Scanner un participant</button>
+    <div id="positioningScanResult"></div>
+    
+    <div class="navigation-buttons">
           <button class="btn-outline" onclick="showStep(3)">⬅️ Retour</button>
           <button class="btn-secondary" onclick="showStep(2)">📱 Scanner</button>
           <button class="btn-primary" onclick="showStep(5)">✅ Je suis bien placé</button>
@@ -880,9 +951,12 @@
               </div>
               <p style="text-align: center; font-size: 0.9rem; color: #6B7280;">Affichez ce QR code aux participants</p>
             </div>
-          </div>
-          
-          <h3 style="margin-top: 30px;">📊 Statistiques de l'atelier</h3>
+         </div>
+    
+    <h3 style="margin-top: 30px;">🏆 Classement des participants</h3>
+    <div class="leaderboard" id="leaderboard"></div>
+    
+    <h3 style="margin-top: 30px;">📊 Statistiques de l'atelier</h3>
           <button class="btn-secondary" onclick="refreshAdminStats()">🔄 Actualiser les données</button>
           
           <div class="stats-grid">
@@ -960,6 +1034,7 @@
   <canvas id="canvas"></canvas>
   <canvas id="gameCanvas"></canvas>
   <canvas id="companyCanvas"></canvas>
+  <canvas id="positioningCanvas"></canvas>
 
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
@@ -1485,6 +1560,9 @@
       
       if (stepNumber === 2) {
         setTimeout(() => genMyQRCode('qrcode'), 100);
+        if ($('step2EmojiDisplay')) {
+          $('step2EmojiDisplay').textContent = myEmoji;
+          }
       } else if (stepNumber === 3) {
         initGame();
         setTimeout(() => genMyQRCode('qrcodeStep3'), 100);
@@ -1685,10 +1763,17 @@
     }
     
     function startScanLoop(type = 'normal') {
-      const videoId = type === 'game' ? 'gameVideo' : type === 'company' ? 'companyVideo' : 'video';
-      const canvasId = type === 'game' ? 'gameCanvas' : type === 'company' ? 'companyCanvas' : 'canvas';
-      const cameraViewId = type === 'game' ? 'gameCameraView' : type === 'company' ? 'companyCameraView' : 'cameraView';
-      const scanBtnId = type === 'game' ? 'gameScanBtn' : 'scanBtn';
+      const videoId = type === 'game' ? 'gameVideo' : 
+                type === 'company' ? 'companyVideo' : 
+                type === 'positioning' ? 'positioningVideo' : 'video';
+      const canvasId = type === 'game' ? 'gameCanvas' : 
+                 type === 'company' ? 'companyCanvas' : 
+                 type === 'positioning' ? 'positioningCanvas' : 'canvas';
+      const cameraViewId = type === 'game' ? 'gameCameraView' : 
+                  type === 'company' ? 'companyCameraView' : 
+                  type === 'positioning' ? 'positioningCameraView' : 'cameraView';
+      const scanBtnId = type === 'game' ? 'gameScanBtn' : 
+                  type === 'positioning' ? 'positioningScanBtn' : 'scanBtn';
       
       const video = $(videoId);
       const canvas = $(canvasId);
@@ -1733,6 +1818,9 @@
                 if (type === 'company') {
                   handleCompanyScan(parsedData);
                   return;
+                  } else if (type === 'positioning') {
+                    handlePositioningScan(parsedData);
+                    return;
                 } else if (parsedData.id && parsedData.lat && parsedData.lon) {
                   let handled = false;
                   if (type === 'game') {
@@ -1767,7 +1855,7 @@
     function handleCompanyScan(data) {
       if (data.type === 'company' && data.lat && data.lon) {
         companyCoords = { lat: data.lat, lon: data.lon };
-        companyAddress = data.address || 'Entreprise';
+        companyAddress = 'Entreprise';
         
         localStorage.setItem('companyCoords', JSON.stringify(companyCoords));
         localStorage.setItem('companyAddress', companyAddress);
@@ -1778,6 +1866,18 @@
         calculateAndShowReport();
       }
     }
+
+    // ========== GESTION SCAN POSITIONNEMENT ==========
+    function handlePositioningScan(data) {
+      if (data.id && data.lat && data.lon) {
+        const distance = haversineKm(myCoords.lat, myCoords.lon, data.lat, data.lon);
+        showSuccess(`📍 Distance avec ${data.emoji || '🤖'}: ${distance.toFixed(1)} km`);
+        stopAllCameras();
+        return true;
+      }
+      return false;
+    }
+
     
     function calculateAndShowReport() {
       if (!myCoords || !companyCoords) {
@@ -1811,28 +1911,35 @@
       const distance = haversineKm(myCoords.lat, myCoords.lon, data.lat, data.lon);
       const participant = {
         id: data.id,
+        emoji: data.emoji || '🤖',
         lat: data.lat,
         lon: data.lon,
         distance,
         transport: data.transport || '',
-        emoji: participantNicknames[data.emojiIndex] || '🤖',
         timestamp: Date.now()
       };
       
       participants.push(participant);
       participants.sort((a, b) => a.distance - b.distance);
       
+      // Incrémenter le compteur de scans
+      scanCount++;
+      localStorage.setItem('scanCount', scanCount);
+      
       // ENVOI GOOGLE SHEETS - Type "scan"
       sendToGoogleSheets({
         type: 'scan',
         scannerId: myUniqueId,
+        scannerEmoji: myEmoji,
         scannedId: data.id,
+        scannedEmoji: data.emoji,
         distance: distance,
-        step: 2
+        step: 2,
+        totalScans: scanCount
       });
       
       updateProgress();
-      showSuccess(`✅ Participant ajouté ! Distance: ${distance.toFixed(1)} km`);
+      showSuccess(`✅ ${data.emoji} ajouté ! Distance: ${distance.toFixed(1)} km`);
       
       // CHALLENGE SI MOINS DE 5KM
       if (distance < 5) {
@@ -2020,6 +2127,7 @@
     
     async function refreshAdminStats() {
       // Essayer de récupérer depuis Google Sheets
+      let leaderboard = [];
       const sheetData = await getFromGoogleSheets();
       
       if (sheetData && sheetData.participants) {
@@ -2027,6 +2135,23 @@
         const allParticipants = sheetData.participants;
         const total = allParticipants.length;
         $('adminTotalUsers').textContent = total;
+
+        // Construire le classement depuis Google Sheets
+        const participantScans = {};
+
+        if (sheetData.scans) {
+        sheetData.scans.forEach(scan => {
+            const emoji = scan.scannerEmoji || scan.emoji;
+          if (!participantScans[emoji]) {
+            participantScans[emoji] = 0;
+            }
+            participantScans[emoji]++;
+          });
+      }
+
+      leaderboard = Object.entries(participantScans)
+        .map(([emoji, count]) => ({ emoji, count }))
+        .sort((a, b) => b.count - a.count);
         
         if (total > 1) {
           // Calculer stats depuis sheet data
@@ -2068,6 +2193,15 @@
           const avgDist = participants.reduce((sum, p) => sum + p.distance, 0) / participants.length;
           $('adminAvgDistance').textContent = avgDist.toFixed(1) + ' km';
         }
+
+          // Construire leaderboard local
+        const localScans = {};
+          localScans[myEmoji] = scanCount;
+          participants.forEach(p => {
+          if (!localScans[p.emoji]) {
+              localScans[p.emoji] = 0;
+            }
+        });
         
         const transportCounts = {};
         participants.forEach(p => {
@@ -2083,6 +2217,41 @@
         
         $('adminStats').innerHTML = statsHTML;
       }
+    }
+
+    function displayLeaderboard(leaderboard) {
+      const leaderboardDiv = $('leaderboard');
+      leaderboardDiv.innerHTML = '';
+  
+      if (leaderboard.length === 0) {
+        leaderboardDiv.innerHTML = '<p style="text-align: center; color: #6B7280;">Aucun participant pour le moment</p>';
+        return;
+      }
+  
+      leaderboard.slice(0, 10).forEach((item, index) => {
+        const div = document.createElement('div');
+        div.className = 'leaderboard-item';
+    
+        if (index === 0) div.classList.add('first');
+        else if (index === 1) div.classList.add('second');
+        else if (index === 2) div.classList.add('third');
+    
+        let medal = '';
+        if (index === 0) medal = '🥇';
+        else if (index === 1) medal = '🥈';
+        else if (index === 2) medal = '🥉';
+        else medal = `${index + 1}.`;
+    
+        div.innerHTML = `
+          <div style="display: flex; align-items: center;">
+            <span style="font-size: 1.5rem; margin-right: 10px;">${medal}</span>
+            <span class="leaderboard-emoji">${item.emoji}</span>
+          </div>
+          <div class="leaderboard-score">${item.count} scans</div>
+        `;
+    
+        leaderboardDiv.appendChild(div);
+      });
     }
     
     function saveGoogleScriptUrl() {
@@ -2105,7 +2274,14 @@
       participants = [];
       gameTargets = [];
       scannedTargets = [];
+      scanCount = 0;
       localStorage.clear();
+
+      // Régénérer ID et emoji
+      myUniqueId = generateUniqueId();
+      myEmoji = generateEmojiPseudo();
+      localStorage.setItem('myUniqueId', myUniqueId);
+      localStorage.setItem('myEmoji', myEmoji);
       
       showSuccess('🗑️ Données réinitialisées');
       refreshAdminStats();
@@ -2134,6 +2310,8 @@
   
   <div class="section">
     <h2>📍 Votre profil</h2>
+    <p class="emoji">${myEmoji}</p>
+    <p><strong>Nombre de participants scannés :</strong> ${scanCount}</p>
     <p><strong>Adresse :</strong> ${myFullAddress}</p>
     <p><strong>Mode principal :</strong> ${myTransportMode}</p>
     ${myTransportMode2 ? `<p><strong>Mode secondaire :</strong> ${myTransportMode2} (${mode2Days}j/semaine)</p>` : ''}
@@ -2167,6 +2345,7 @@
   <footer style="margin-top: 50px; text-align: center; color: #666; font-size: 0.9rem;">
     <p>Rapport généré le ${new Date().toLocaleDateString('fr-FR')}</p>
     <p>GoDifferent - Atelier Mobilité Durable</p>
+    <p>Votre identifiant RGPD : ${myEmoji}</p>
   </footer>
 </body>
 </html>
@@ -2176,7 +2355,7 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `rapport-mobilite-${Date.now()}.html`;
+        a.download = `rapport-mobilite-${myEmoji.replace(/[^\w]/g, '')}-${Date.now()}.html`;
         a.click();
         
         showSuccess('✅ Rapport téléchargé !');
@@ -2196,6 +2375,7 @@
       } else {
         // Fallback localStorage
         participantsData = participants.map(p => ({
+          Emoji: p.emoji,
           ID: p.id.substring(0, 8),
           Latitude: p.lat,
           Longitude: p.lon,
@@ -2203,13 +2383,19 @@
           'Mode transport': p.transport,
           Emoji: p.emoji
         }));
-        
+
+      
+leaderboard = Object.entries(localScans)
+  .map(([emoji, count]) => ({ emoji, count }))
+  .sort((a, b) => b.count - a.count);
         scansData = [{
+          Emoji: myEmoji,
           ID: myUniqueId.substring(0, 8),
           'Nb scans': participants.length
         }];
         
         resultsData = [{
+          Emoji: myEmoji,
           ID: myUniqueId.substring(0, 8),
           Score: score,
           Tentatives: 5 - attemptsLeft
@@ -2227,14 +2413,21 @@
       
       XLSX.writeFile(wb, `atelier-mobilite-${Date.now()}.xlsx`);
       showSuccess('📊 Excel exporté !');
+      // Afficher le classement
+      displayLeaderboard(leaderboard);
     }
     
     // ========== INITIALISATION ==========
     document.addEventListener('DOMContentLoaded', function() {
-      checkRGPDStatus();
-      restoreUserData();
-      
-      const saveLocationBtn = $('saveLocation');
+  checkRGPDStatus();
+  restoreUserData();
+  
+  // Afficher l'emoji si déjà généré
+  if (myEmoji && $('myEmojiDisplay')) {
+    $('myEmojiDisplay').textContent = myEmoji;
+  }
+  
+  const saveLocationBtn = $('saveLocation');
       if (saveLocationBtn) {
         saveLocationBtn.addEventListener('click', async () => {
           const userAddress = $('userAddress');
@@ -2259,14 +2452,22 @@
             const res = await geocode(location);
             
             if (!myUniqueId) {
-              myUniqueId = localStorage.getItem('myUniqueId');
-              if (!myUniqueId) {
-                myUniqueId = generateUniqueId();
-                localStorage.setItem('myUniqueId', myUniqueId);
-              }
-            }
-            
-            myCoords = { lat: res.lat, lon: res.lon };
+  myUniqueId = localStorage.getItem('myUniqueId');
+  if (!myUniqueId) {
+    myUniqueId = generateUniqueId();
+    localStorage.setItem('myUniqueId', myUniqueId);
+  }
+}
+
+if (!myEmoji) {
+  myEmoji = localStorage.getItem('myEmoji');
+  if (!myEmoji) {
+    myEmoji = generateEmojiPseudo();
+    localStorage.setItem('myEmoji', myEmoji);
+  }
+}
+
+myCoords = { lat: res.lat, lon: res.lon };
             myFullAddress = res.fullAddress;
             myTransportMode = transport;
             myDepartureTime = departure;
@@ -2276,25 +2477,25 @@
             localStorage.setItem('departureTime', departure);
             localStorage.setItem('fullAddress', myFullAddress);
             
-            // ENVOI GOOGLE SHEETS - Type "participant"
-            const emojiIndex = parseInt(myUniqueId.substring(0, 2), 36) % participantNicknames.length;
-            sendToGoogleSheets({
-              type: 'participant',
-              id: myUniqueId,
-              lat: myCoords.lat,
-              lon: myCoords.lon,
-              address: myFullAddress,
-              transport: myTransportMode,
-              departureTime: myDepartureTime,
-              emoji: participantNicknames[emojiIndex]
-            });
+           // ENVOI GOOGLE SHEETS
+sendToGoogleSheets({
+  type: 'participant',
+  id: myUniqueId,
+  emoji: myEmoji,
+  lat: myCoords.lat,
+  lon: myCoords.lon,
+  address: myFullAddress,
+  transport: myTransportMode,
+  departureTime: myDepartureTime
+});
             
             $('locationSection').style.display = 'none';
-            $('afterLocationSection').style.display = 'block';
-            $('detectedAddress').textContent = res.fullAddress;
-            
-            genMyQRCode();
-            showSuccess('✅ Localisation enregistrée !');
+$('afterLocationSection').style.display = 'block';
+$('detectedAddress').textContent = res.fullAddress;
+$('myEmojiDisplay').textContent = myEmoji;
+
+genMyQRCode();
+showSuccess('✅ Localisation enregistrée !');
             
           } catch (e) {
             showError('Erreur: ' + e.message);
