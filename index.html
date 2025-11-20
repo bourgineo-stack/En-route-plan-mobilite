@@ -1450,32 +1450,31 @@
     
     // ========== GÉNÉRATION QR CODES ==========
     function genMyQRCode(targetElementId = 'qrcode') {
-        const qrcodeElement = $(targetElementId);
-        if (!qrcodeElement) return;
-  
-        qrcodeElement.innerHTML = '';
-  
-          const qrData = JSON.stringify({
-          id: myUniqueId,
-          emoji: myEmoji,
-          lat: myCoords.lat,
-          lon: myCoords.lon,
-          transport: myTransportMode
-        });
-  
-        try {
-          new QRCode(qrcodeElement, {
-            text: qrData,
-            width: 200,
-            height: 200,
-            colorDark: '#1E3A5F',
-            colorLight: '#ffffff',
-            correctLevel: QRCode.CorrectLevel.H
-          });
-        } catch (error) {
-          console.error('Erreur QR:', error);
-        }
-      }
+    const qrcodeElement = $(targetElementId);
+    if (!qrcodeElement) return;
+
+    qrcodeElement.innerHTML = '';
+
+    const qrData = JSON.stringify({
+      id: myUniqueId,
+      lat: myCoords.lat,
+      lon: myCoords.lon,
+      transport: myTransportMode
+    });
+
+    try {
+      new QRCode(qrcodeElement, {
+        text: qrData,
+        width: 200,
+        height: 200,
+        colorDark: '#1E3A5F',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.H
+      });
+    } catch (error) {
+      console.error('Erreur QR:', error);
+    }
+  }
     
     function genInviteQRCode() {
       const inviteQrcode = $('inviteQrcode');
@@ -1909,19 +1908,19 @@
     
     // ========== GESTION PARTICIPANTS ==========
     function addParticipant(data) {
-      const existing = participants.find(p => p.id === data.id);
-      if (existing) return false;
-      
-      const distance = haversineKm(myCoords.lat, myCoords.lon, data.lat, data.lon);
-      const participant = {
-        id: data.id,
-        emoji: data.emoji || '🤖',
-        lat: data.lat,
-        lon: data.lon,
-        distance,
-        transport: data.transport || '',
-        timestamp: Date.now()
-      };
+  const existing = participants.find(p => p.id === data.id);
+  if (existing) return false;
+  
+  const distance = haversineKm(myCoords.lat, myCoords.lon, data.lat, data.lon);
+  const participant = {
+    id: data.id,
+    emoji: '👤',
+    lat: data.lat,
+    lon: data.lon,
+    distance,
+    transport: data.transport || '',
+    timestamp: Date.now()
+  };
       
       participants.push(participant);
       participants.sort((a, b) => a.distance - b.distance);
