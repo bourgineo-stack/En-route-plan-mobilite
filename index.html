@@ -754,37 +754,37 @@
       </div>
     </div>
 
-    <!-- Étape 4 : Positionnement -->
-    <div id="step4" class="step">
-      <div class="card">
-        <h2>🗺️ Positionnement sur la carte</h2>
-        
-        <div style="background: #EFF6FF; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
-          <p>📍 Des QR codes de repère sont disposés dans la salle</p>
-          <p>👥 Scannez les autres pour connaître les distances</p>
-          <p>📐 Positionnez-vous en vous repérant mutuellement</p>
-        </div>
-        
-        <div class="qrcode-container">
+   <!-- Étape 4 : Positionnement -->
+<div id="step4" class="step">
+  <div class="card">
+    <h2>🗺️ Positionnement sur la carte</h2>
+    
+    <div style="background: #EFF6FF; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+      <p>📍 Des QR codes de repère sont disposés dans la salle</p>
+      <p>👥 Scannez les autres participants pour connaître les distances</p>
+      <p>📐 Positionnez-vous en vous repérant mutuellement</p>
+    </div>
+    
+    <div class="qrcode-container">
       <p><strong>Votre QR code</strong></p>
       <div id="qrcodeStep4"></div>
     </div>
     
     <div class="camera-view" id="positioningCameraView">
       <video id="positioningVideo" autoplay playsinline muted></video>
-      <button class="btn-outline" style="margin-top: 15px;" onclick="stopAllCameras()">🛑 Arrêter</button>
+      <button class="btn-outline" style="margin-top: 15px;" onclick="stopAllCameras()">🛑 Arrêter la caméra</button>
     </div>
     
-    <button class="btn-secondary" id="positioningScanBtn" onclick="startScanLoop('positioning')">📱 Scanner un participant</button>
+    <button class="btn-primary" id="positioningScanBtn" onclick="startScanLoop('positioning')">📱 Scanner un participant</button>
+    
     <div id="positioningScanResult"></div>
     
     <div class="navigation-buttons">
-          <button class="btn-outline" onclick="showStep(3)">⬅️ Retour</button>
-          <button class="btn-secondary" onclick="showStep(2)">📱 Scanner</button>
-          <button class="btn-primary" onclick="showStep(5)">✅ Je suis bien placé</button>
-        </div>
-      </div>
+      <button class="btn-outline" onclick="showStep(3)">⬅️ Retour</button>
+      <button class="btn-primary" onclick="showStep(5)">✅ Je suis bien placé</button>
     </div>
+  </div>
+</div>
 
     <!-- Étape 5 : Phase Pelotes -->
     <div id="step5" class="step">
@@ -1873,15 +1873,15 @@
     }
 
     // ========== GESTION SCAN POSITIONNEMENT ==========
-    function handlePositioningScan(data) {
-      if (data.id && data.lat && data.lon) {
-        const distance = haversineKm(myCoords.lat, myCoords.lon, data.lat, data.lon);
-        showSuccess(`📍 Distance avec ${data.emoji || '🤖'}: ${distance.toFixed(1)} km`);
-        stopAllCameras();
-        return true;
-      }
-      return false;
-    }
+   function handlePositioningScan(data) {
+  if (data.id && data.lat && data.lon) {
+    const distance = haversineKm(myCoords.lat, myCoords.lon, data.lat, data.lon);
+    showSuccess(`📍 Distance: ${distance.toFixed(1)} km • Scannez d'autres participants !`);
+    // NE PAS ARRÊTER LA CAMÉRA pour permettre plusieurs scans
+    return true;
+  }
+  return false;
+}
 
     
     function calculateAndShowReport() {
