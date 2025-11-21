@@ -1687,10 +1687,49 @@ if (savedUrl) {
     }
     
     function showCompanyScan() {
-      document.querySelectorAll('.step').forEach(step => step.classList.remove('active'));
-      $('companyScanPage').classList.add('active');
-      window.scrollTo(0, 0);
-    }
+  // ENVOYER LES PROPOSITIONS AVANT D'ALLER SCANNER L'ENTREPRISE
+  const alternativesText = Object.keys(selectedAlternatives).join(', ');
+  const prioritiesText = Object.entries(selectedAlternatives)
+    .filter(([name, priority]) => priority)
+    .map(([name, priority]) => `${name} (priorité ${priority})`)
+    .join(', ');
+  const contraintesText = selectedConstraints.join(', ');
+  const leviersText = selectedLevers.join(', ');
+  
+  // Récupérer les valeurs des champs "Autre"
+  const altAutre = $('altAutre');
+  const conAutre = $('conAutre');
+  const levAutre = $('levAutre');
+  
+  let finalAlternatives = alternativesText;
+  let finalContraintes = contraintesText;
+  let finalLevers = leviersText;
+  
+  if (altAutre && !altAutre.disabled && altAutre.value.trim()) {
+    finalAlternatives += ` (Autre: ${altAutre.value.trim()})`;
+  }
+  if (conAutre && !conAutre.disabled && conAutre.value.trim()) {
+    finalContraintes += ` (Autre: ${conAutre.value.trim()})`;
+  }
+  if (levAutre && !levAutre.disabled && levAutre.value.trim()) {
+    finalLevers += ` (Autre: ${levAutre.value.trim()})`;
+  }
+  
+  sendToGoogleSheets({
+    type: 'propositions',
+    participantId: myUniqueId,
+    emoji: myEmoji,
+    alternatives: finalAlternatives,
+    priorities: prioritiesText,
+    contraintes: finalContraintes,
+    leviers: finalLevers,
+    engagement: commitmentLevel
+  });
+  
+  document.querySelectorAll('.step').forEach(step => step.classList.remove('active'));
+  $('companyScanPage').classList.add('active');
+  window.scrollTo(0, 0);
+}
     
     // ========== STEP 5 STATS ==========
     function updateStep5Stats() {
@@ -1774,6 +1813,11 @@ LEVERS.forEach((lev, i) => {
       autreInput.disabled = false;
     }
     selectedAlternatives[name] = '';
+    
+    // Capturer la priorité quand elle change
+    prioritySelect.onchange = () => {
+      selectedAlternatives[name] = prioritySelect.value;
+    };
   } else {
     prioritySelect.disabled = true;
     prioritySelect.value = '';
