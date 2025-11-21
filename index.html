@@ -1730,31 +1730,38 @@ if (savedUrl) {
 });
       
       // Contraintes
-      const conList = $('constraintsList');
-      conList.innerHTML = '';
-      CONSTRAINTS.forEach((con, i) => {
-        const div = document.createElement('div');
-        div.className = 'checkbox-item';
-        div.innerHTML = `
-          <input type="checkbox" id="con${i}" onchange="toggleConstraint('${con.replace(/'/g, "\\'")}')">
-          <label for="con${i}">${con}</label>
-        `;
-        conList.appendChild(div);
-      });
-      
+const conList = $('constraintsList');
+conList.innerHTML = '';
+CONSTRAINTS.forEach((con, i) => {
+  const div = document.createElement('div');
+  div.className = 'checkbox-item';
+  
+  const isAutre = con.includes('Autre');
+  
+  div.innerHTML = `
+    <input type="checkbox" id="con${i}" onchange="toggleConstraint('${con.replace(/'/g, "\\'")}')">
+    <label for="con${i}">${con}</label>
+    ${isAutre ? '<input type="text" id="conAutre" placeholder="Précisez..." style="margin-left: 10px; flex: 1;" disabled>' : ''}
+  `;
+  conList.appendChild(div);
+});
+
       // Leviers
-      const levList = $('leversList');
-      levList.innerHTML = '';
-      LEVERS.forEach((lev, i) => {
-        const div = document.createElement('div');
-        div.className = 'checkbox-item';
-        div.innerHTML = `
-          <input type="checkbox" id="lev${i}" onchange="toggleLever('${lev.replace(/'/g, "\\'")}')">
-          <label for="lev${i}">${lev}</label>
-        `;
-        levList.appendChild(div);
-      });
-    }
+const levList = $('leversList');
+levList.innerHTML = '';
+LEVERS.forEach((lev, i) => {
+  const div = document.createElement('div');
+  div.className = 'checkbox-item';
+  
+  const isAutre = lev.includes('Autre');
+  
+  div.innerHTML = `
+    <input type="checkbox" id="lev${i}" onchange="toggleLever('${lev.replace(/'/g, "\\'")}')">
+    <label for="lev${i}">${lev}</label>
+    ${isAutre ? '<input type="text" id="levAutre" placeholder="Précisez..." style="margin-left: 10px; flex: 1;" disabled>' : ''}
+  `;
+  levList.appendChild(div);
+});
     
     function toggleAlternative(index, name) {
   const checked = $(`alt${index}`).checked;
@@ -1779,22 +1786,40 @@ if (savedUrl) {
 }
     
     function toggleConstraint(name) {
-      const index = selectedConstraints.indexOf(name);
-      if (index > -1) {
-        selectedConstraints.splice(index, 1);
-      } else {
-        selectedConstraints.push(name);
-      }
+  const index = selectedConstraints.indexOf(name);
+  const autreInput = $('conAutre');
+  
+  if (index > -1) {
+    selectedConstraints.splice(index, 1);
+    if (autreInput && name.includes('Autre')) {
+      autreInput.disabled = true;
+      autreInput.value = '';
     }
+  } else {
+    selectedConstraints.push(name);
+    if (autreInput && name.includes('Autre')) {
+      autreInput.disabled = false;
+    }
+  }
+}
     
     function toggleLever(name) {
-      const index = selectedLevers.indexOf(name);
-      if (index > -1) {
-        selectedLevers.splice(index, 1);
-      } else {
-        selectedLevers.push(name);
-      }
+  const index = selectedLevers.indexOf(name);
+  const autreInput = $('levAutre');
+  
+  if (index > -1) {
+    selectedLevers.splice(index, 1);
+    if (autreInput && name.includes('Autre')) {
+      autreInput.disabled = true;
+      autreInput.value = '';
     }
+  } else {
+    selectedLevers.push(name);
+    if (autreInput && name.includes('Autre')) {
+      autreInput.disabled = false;
+    }
+  }
+}
     
     function updateCommitmentValue() {
       commitmentLevel = parseInt($('commitmentRange').value);
@@ -2447,13 +2472,21 @@ ${myTransportMode2 ? `<p><strong>Mode secondaire :</strong> ${translateTransport
         `;
         
         const blob = new Blob([content], { type: 'text/html' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `rapport-mobilite-${myEmoji.replace(/[^\w]/g, '')}-${Date.now()}.html`;
-        a.click();
-        
-        showSuccess('✅ Rapport téléchargé !');
+const url = URL.createObjectURL(blob);
+
+// Détection mobile
+if (/Android|iPhone|iPad/i.test(navigator.userAgent)) {
+  // Sur mobile : ouvrir dans nouvel onglet
+  window.open(url, '_blank');
+  showSuccess('✅ Rapport ouvert dans un nouvel onglet !');
+} else {
+  // Sur PC : télécharger
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `rapport-mobilite-${myEmoji.replace(/[^\w]/g, '')}-${Date.now()}.html`;
+  a.click();
+  showSuccess('✅ Rapport téléchargé !');
+}
       }, 1000);
     }
     
