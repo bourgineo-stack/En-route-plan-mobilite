@@ -1709,20 +1709,25 @@ if (savedUrl) {
       const altList = $('alternativesList');
       altList.innerHTML = '';
       ALTERNATIVES.forEach((alt, i) => {
-        const div = document.createElement('div');
-        div.className = 'priority-selector';
-        div.innerHTML = `
-          <input type="checkbox" id="alt${i}" onchange="toggleAlternative(${i}, '${alt.replace(/'/g, "\\'")}')">
-          <label for="alt${i}">${alt}</label>
-          <select id="altPriority${i}" disabled>
-            <option value="">-</option>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-          </select>
-        `;
-        altList.appendChild(div);
-      });
+  const div = document.createElement('div');
+  div.className = 'priority-selector';
+  
+  // Vérifier si c'est "Autre (précisez)"
+  const isAutre = alt.includes('Autre');
+  
+  div.innerHTML = `
+    <input type="checkbox" id="alt${i}" onchange="toggleAlternative(${i}, '${alt.replace(/'/g, "\\'")}')">
+    <label for="alt${i}">${alt}</label>
+    ${isAutre ? '<input type="text" id="altAutre" placeholder="Précisez..." style="flex: 1; margin: 0;" disabled>' : ''}
+    <select id="altPriority${i}" disabled>
+      <option value="">-</option>
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3">3</option>
+    </select>
+  `;
+  altList.appendChild(div);
+});
       
       // Contraintes
       const conList = $('constraintsList');
@@ -1752,18 +1757,26 @@ if (savedUrl) {
     }
     
     function toggleAlternative(index, name) {
-      const checked = $(`alt${index}`).checked;
-      const prioritySelect = $(`altPriority${index}`);
-      
-      if (checked) {
-        prioritySelect.disabled = false;
-        selectedAlternatives[name] = '';
-      } else {
-        prioritySelect.disabled = true;
-        prioritySelect.value = '';
-        delete selectedAlternatives[name];
-      }
+  const checked = $(`alt${index}`).checked;
+  const prioritySelect = $(`altPriority${index}`);
+  const autreInput = $('altAutre');
+  
+  if (checked) {
+    prioritySelect.disabled = false;
+    if (autreInput && name.includes('Autre')) {
+      autreInput.disabled = false;
     }
+    selectedAlternatives[name] = '';
+  } else {
+    prioritySelect.disabled = true;
+    prioritySelect.value = '';
+    if (autreInput && name.includes('Autre')) {
+      autreInput.disabled = true;
+      autreInput.value = '';
+    }
+    delete selectedAlternatives[name];
+  }
+}
     
     function toggleConstraint(name) {
       const index = selectedConstraints.indexOf(name);
@@ -2212,14 +2225,16 @@ if (savedUrl) {
         const participantScans = {};
 
         if (sheetData.scans) {
-        sheetData.scans.forEach(scan => {
-            const emoji = scan.scannerEmoji || scan.emoji;
-          if (!participantScans[emoji]) {
-            participantScans[emoji] = 0;
-            }
-            participantScans[emoji]++;
-          });
+  sheetData.scans.forEach(scan => {
+    const emoji = scan['Scanner Emoji'] || scan.scannerEmoji || scan.emoji || '👤';
+    if (emoji && emoji !== 'undefined') {  // ← Filtrer les undefined
+      if (!participantScans[emoji]) {
+        participantScans[emoji] = 0;
       }
+      participantScans[emoji]++;
+    }
+  });
+}
 
       leaderboard = Object.entries(participantScans)
         .map(([emoji, count]) => ({ emoji, count }))
