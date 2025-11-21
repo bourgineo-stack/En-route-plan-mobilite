@@ -1374,36 +1374,31 @@ if (savedUrl) {
     }
     
     // ========== GOOGLE SHEETS SYNC ==========
-    async function sendToGoogleSheets(data) {
+   async function sendToGoogleSheets(data) {
   if (!googleScriptUrl) {
-    console.warn('⚠️ Google Script URL non configurée, sauvegarde locale uniquement');
+    console.warn('⚠️ Google Script URL non configurée');
     return false;
   }
   
   console.log('📤 Envoi vers Google Sheets:', data);
   
   try {
+    // Utiliser mode: 'no-cors' pour éviter les erreurs CORS
     const response = await fetch(googleScriptUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-      redirect: 'follow'
+      mode: 'no-cors',  // ← CRITIQUE pour Google Apps Script
+      body: JSON.stringify(data)
     });
     
-    console.log('✅ Réponse reçue, statut:', response.status);
-    
-    // Même avec no-cors on ne peut pas lire la réponse, 
-    // mais on considère que c'est OK si pas d'erreur
+    // Avec no-cors, on ne peut pas lire le statut, mais pas d'erreur = succès
+    console.log('✅ Données envoyées (mode no-cors)');
     return true;
   } catch (error) {
-    console.error('❌ Erreur envoi Google Sheets:', error);
-    // Afficher une alerte pour debug mobile
-    showError('Erreur envoi: ' + error.message);
+    console.error('❌ Erreur envoi:', error);
     return false;
   }
 }
+
     
     async function getFromGoogleSheets() {
       if (!googleScriptUrl) {
